@@ -1,82 +1,133 @@
 // FrameWalk - Route Manager
-//
-// Manages walking routes and their photography stops.
-// Supports adding, retrieving, and removing routes.
+// Stores route definitions and provides basic route operations.
+// A Provider can wrap RouteManager to notify the UI about bookmark changes.
 
-// Represents a walking route with photography stops.
 class WalkingRoute {
   final String id;
   final String name;
+  final String description;
+  final int estimatedMinutes;
+  final double distanceMiles;
   final List<String> stopIds;
+  final List<String> sceneryTags;
+  final bool isBookmarked;
 
   WalkingRoute({
     required this.id,
     required this.name,
     required List<String> stopIds,
-  }) : stopIds = List.unmodifiable(stopIds);
+    this.description = '',
+    this.estimatedMinutes = 0,
+    this.distanceMiles = 0.0,
+    List<String> sceneryTags = const [],
+    this.isBookmarked = false,
+  })  : stopIds = List.unmodifiable(stopIds),
+        sceneryTags = List.unmodifiable(sceneryTags) {
+    if (estimatedMinutes < 0) {
+      throw ArgumentError('Estimated minutes cannot be negative');
+    }
+    if (!distanceMiles.isFinite || distanceMiles < 0) {
+      throw ArgumentError('Distance must be a finite nonnegative number');
+    }
+  }
+
+  WalkingRoute copyWith({
+    String? name,
+    String? description,
+    int? estimatedMinutes,
+    double? distanceMiles,
+    List<String>? stopIds,
+    List<String>? sceneryTags,
+    bool? isBookmarked,
+  }) {
+    return WalkingRoute(
+      id: id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      distanceMiles: distanceMiles ?? this.distanceMiles,
+      stopIds: stopIds ?? this.stopIds,
+      sceneryTags: sceneryTags ?? this.sceneryTags,
+      isBookmarked: isBookmarked ?? this.isBookmarked,
+    );
+  }
 }
 
-// Manages walking routes for the FrameWalk application.
 class RouteManager {
-  // Stores routes using their unique IDs.
   final Map<String, WalkingRoute> _routes = {};
 
-  // Adds a new walking route.
   void addRoute(WalkingRoute route) {
-    // Validate route ID.
-    if (route.id.trim().isEmpty) {
-      throw ArgumentError('Route ID cannot be empty');
-    }
-
-    // Validate route name.
-    if (route.name.trim().isEmpty) {
-      throw ArgumentError('Route name cannot be empty');
-    }
-
-    // Prevent duplicate route IDs.
+    _validateRoute(route);
     if (_routes.containsKey(route.id)) {
       throw ArgumentError('Route already exists');
     }
-
-    // Store the route.
     _routes[route.id] = route;
   }
 
-  // Retrieves a route using its unique ID.
-  // Returns null if the route does not exist.
   WalkingRoute? getRoute(String routeId) {
-    if (routeId.trim().isEmpty) {
-      throw ArgumentError('Route ID cannot be empty');
-    }
-
+    _validateId(routeId);
     return _routes[routeId];
   }
 
-  // Returns all available walking routes.
-  List<WalkingRoute> getAllRoutes() {
-    return List.unmodifiable(_routes.values);
-  }
+  List<WalkingRoute> getAllRoutes() => List.unmodifiable(_routes.values);
 
-  // Retrieves photography stop IDs for a selected route.
-  // Returns an empty list if the route does not exist.
   List<String> getStopsForRoute(String routeId) {
-    final route = getRoute(routeId);
-
-    if (route == null) {
-      return [];
-    }
-
-    return route.stopIds;
+    return getRoute(routeId)?.stopIds ?? const [];
   }
 
-  // Removes an existing route.
-  // Returns true if the route was removed.
-  // Returns false if the route does not exist.
   bool removeRoute(String routeId) {
-    if (routeId.trim().isEmpty) {
+    _validateId(routeId);
+    return _routes.remove(routeId) != null;
+  }
+
+  // Replaces a route with updated information. Returns false if not found.
+  bool updateRoute(WalkingRoute route) {
+    _validateRoute(route);
+    if (!_routes.containsKey(route.id)) return false;
+    _routes[route.id] = route;
+    return true;
+  }
+
+  // Bookmark changes are stored in the route model. A UI Provider should
+  // call this and notifyListeners() so all screens refresh together.
+  bool setBookmarked(String routeId, bool bookmarked) {
+    final route = getRoute(routeId);
+    if (route == null) return false;
+    _routes[routeId] = route.copyWith(isBookmarked: bookmarked);
+    return true;
+  }
+
+  bool toggleBookmark(String routeId) {
+    final route = getRoute(routeId);
+    if (route == null) return false;
+    return setBookmarked(routeId, !route.isBookmarked);
+  }
+
+  List<WalkingRoute> getBookmarkedRoutes() => List.unmodifiable(
+        _routes.values.where((route) => route.isBookmarked),
+      );
+
+  // Matches routes containing every requested scenery tag (case-insensitive).
+  List<WalkingRoute> filterBySceneryTags(List<String> tags) {
+    final requested = tags.map((tag) => tag.trim().toLowerCase())
+        .where((tag) => tag.isNotEmpty).toSet();
+    return List.unmodifiable(_routes.values.where((route) {
+      final available = route.sceneryTags
+          .map((tag) => tag.trim().toLowerCase()).toSet();
+      return available.containsAll(requested);
+    }));
+  }
+
+  void _validateId(String id) {
+    if (id.trim().isEmpty) {
       throw ArgumentError('Route ID cannot be empty');
     }
+  }
 
-    return _routes.remove(routeId) != null;
+  void _validateRoute(WalkingRoute route) {
+    _validateId(route.id);
+    if (route.name.trim().isEmpty) {
+      throw ArgumentError('Route name cannot be empty');
+    }
   }
 }
