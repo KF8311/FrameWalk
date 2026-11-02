@@ -1,3 +1,4 @@
+
 import 'package:flutter_test/flutter_test.dart';
 import '../services/route_manager.dart';
 
@@ -196,5 +197,109 @@ void main() {
         throwsUnsupportedError,
       );
     });
+
+    // Test 16: Store duration, distance, and scenery tags.
+    test('Stores route metadata and filters by scenery tags', () {
+      final route = WalkingRoute(
+        id: 'uw',
+        name: 'UW Campus Walk',
+        stopIds: ['quad', 'fountain'],
+        description: 'Photography walk around campus',
+        estimatedMinutes: 30,
+        distanceMiles: 1.2,
+        sceneryTags: ['Nature', 'Architecture'],
+      );
+
+      routeManager.addRoute(route);
+
+      expect(routeManager.getRoute('uw')!.estimatedMinutes, 30);
+      expect(routeManager.getRoute('uw')!.distanceMiles, 1.2);
+
+      expect(
+        routeManager.filterBySceneryTags(['nature']),
+        [route],
+      );
+
+      expect(
+        routeManager.filterBySceneryTags(['urban']),
+        isEmpty,
+      );
+    });
+
+    // Test 17: Update an existing route.
+    test('Updates route information', () {
+      routeManager.addRoute(
+        WalkingRoute(
+          id: 'uw',
+          name: 'Old Name',
+          stopIds: [],
+        ),
+      );
+
+      final updated = routeManager
+          .getRoute('uw')!
+          .copyWith(name: 'New Name');
+
+      expect(routeManager.updateRoute(updated), isTrue);
+      expect(routeManager.getRoute('uw')!.name, 'New Name');
+    });
+
+    // Test 18: Bookmark and unbookmark a route.
+    test('Bookmarks and unbookmarks a route', () {
+      routeManager.addRoute(
+        WalkingRoute(
+          id: 'uw',
+          name: 'UW Walk',
+          stopIds: [],
+        ),
+      );
+
+      expect(routeManager.setBookmarked('uw', true), isTrue);
+      expect(routeManager.getRoute('uw')!.isBookmarked, isTrue);
+      expect(routeManager.getBookmarkedRoutes(), hasLength(1));
+
+      expect(routeManager.toggleBookmark('uw'), isTrue);
+      expect(routeManager.getRoute('uw')!.isBookmarked, isFalse);
+      expect(routeManager.getBookmarkedRoutes(), isEmpty);
+    });
+
+    // Test 19: Prevent changes to scenery tags.
+    test('Prevents modifying scenery tags', () {
+      final route = WalkingRoute(
+        id: 'uw',
+        name: 'UW Walk',
+        stopIds: [],
+        sceneryTags: ['Nature'],
+      );
+
+      expect(
+        () => route.sceneryTags.add('Architecture'),
+        throwsUnsupportedError,
+      );
+    });
+
+    // Test 20: Reject invalid distance and duration.
+    test('Rejects invalid route duration and distance', () {
+      expect(
+        () => WalkingRoute(
+          id: 'uw',
+          name: 'UW Walk',
+          stopIds: [],
+          estimatedMinutes: -1,
+        ),
+        throwsArgumentError,
+      );
+
+      expect(
+        () => WalkingRoute(
+          id: 'uw',
+          name: 'UW Walk',
+          stopIds: [],
+          distanceMiles: -0.5,
+        ),
+        throwsArgumentError,
+      );
+    });
   });
 }
+
