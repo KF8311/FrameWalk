@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../models/photo_route.dart';
 import '../widgets/route_card.dart';
+import '../../models/mock_route_data.dart';
+import 'route_info_page.dart';
 
 class ActivityPage extends StatefulWidget {
   const ActivityPage({super.key});
@@ -15,30 +17,30 @@ class _ActivityPageState extends State<ActivityPage> {
   // starts on the previous walks tab, which is 0. saved walks is 1
   int _selectedTab = 0;
 
-  // Temporary saved-route data.
-  // Replace this with shared route data later.
+ // Temporary saved-route data.
+  // These should eventually be shared with HomePage.
   final List<PhotoRoute> _savedRoutes = [
     const PhotoRoute(
       id: '1',
-      title: 'Route 1',
-      durationMinutes: 20,
-      distanceMiles: 1.0,
-      sceneryTags: ['Nature', 'Easy'],
+      title: 'Red Square Walk',
+      durationMinutes: 10,
+      distanceMiles: 0.5,
+      sceneryTags: ['Architecture', 'Urban'],
       isBookmarked: true,
     ),
     const PhotoRoute(
       id: '2',
-      title: 'Route 2',
-      durationMinutes: 15,
-      distanceMiles: 0.8,
-      sceneryTags: ['Architecture', 'Easy'],
+      title: 'UW Nature Walk',
+      durationMinutes: 20,
+      distanceMiles: 1.2,
+      sceneryTags: ['Nature', 'Urban'],
       isBookmarked: true,
     ),
     const PhotoRoute(
       id: '3',
-      title: 'Route 3',
+      title: 'Waterfront Views',
       durationMinutes: 30,
-      distanceMiles: 1.5,
+      distanceMiles: 1.8,
       sceneryTags: ['Water', 'Nature'],
       isBookmarked: true,
     ),
@@ -58,6 +60,19 @@ class _ActivityPageState extends State<ActivityPage> {
       }
     });
   }
+
+  void _openRoute(PhotoRoute route) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => RouteInfoPage(
+        route: route,
+        stops: MockRouteData.getStops(route.id),
+        routePoints: MockRouteData.getRoutePoints(route.id),
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -136,9 +151,7 @@ class _ActivityPageState extends State<ActivityPage> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: RouteCard(
                             route: route,
-                            onTap: () {
-                              // TODO: Open route details. this will be same as home page
-                            },
+                            onTap: () => _openRoute(route),
                             onBookmarkTap: () {
                               _toggleBookmark(route);
                             },
