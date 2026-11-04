@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "952755882028",
+    "project_id": "framewalk-1a4c7",
+    "storage_bucket": "framewalk-1a4c7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:952755882028:android:5fc955bd8de6ea4887e989",
+        "android_client_info": {
+          "package_name": "com.frame_walk.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7Mh2hK-a8MKPA77zMQ7kBapgmwUiumzI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

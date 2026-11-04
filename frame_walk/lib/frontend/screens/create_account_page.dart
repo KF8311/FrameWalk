@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:frame_walk/frontend/widgets/bottom_nav.dart';
 
+import '../../backend/services/auth_service.dart';
 import 'login_page.dart';
 
 class CreateAccountPage extends StatefulWidget {
-  const CreateAccountPage({super.key});
+  final AuthService? authService;
+
+  const CreateAccountPage({super.key, this.authService});
 
   @override
   State<CreateAccountPage> createState() => _CreateAccountPageState();
@@ -12,36 +14,50 @@ class CreateAccountPage extends StatefulWidget {
 
 class _CreateAccountPageState extends State<CreateAccountPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // Keeps usernames readable and matches the check in firestore.rules
+  static final _validUsername = RegExp(r'^[A-Za-z0-9_]{3,20}$');
+
   bool _obscurePassword = true;
+
+  // Whether a create account request is in progress, which disables the button
+  bool _isSubmitting = false;
+
+  late final AuthService _authService = widget.authService ?? AuthService();
 
   @override
   // Gets called when this State is removed from the tree (when it will never be built again)
   void dispose() {
-    _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  // For now, creating account just goes to home screen
-  void _createAccount() {
-    if (_formKey.currentState!.validate()) {
-      //   // TODO: Connect to account creation service later.
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(
-      //       content: Text(
-      //         'Account form works! Account creation is not connected yet.',
-      //       ),
-      //     ),
-      //   );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const BottomNav()),
+  Future<void> _createAccount() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await _authService.createAccount(
+        email: _emailController.text,
+        username: _usernameController.text,
+        password: _passwordController.text,
       );
+      if (!mounted) return;
+      // AuthGate at the root has already switched to the home screen
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } on AuthFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message)));
     }
   }
 
@@ -89,16 +105,21 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
                   const SizedBox(height: 24),
 
-                  // Full name
-                  const Text('Full name'),
+                  // Username
+                  const Text('Username'),
                   const SizedBox(height: 6),
                   TextFormField(
-                    controller: _nameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(hintText: 'Your name'),
+                    controller: _usernameController,
+                    autocorrect: false,
+                    decoration: const InputDecoration(
+                      hintText: 'Choose a username',
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Please enter your name';
+                        return 'Please enter a username';
+                      }
+                      if (!_validUsername.hasMatch(value.trim())) {
+                        return 'Use 3-20 letters, numbers, or underscores';
                       }
                       return null;
                     },
@@ -164,7 +185,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _createAccount,
+                      onPressed: _isSubmitting ? null : _createAccount,
                       child: const Text('Create Account', style: TextStyle(fontSize: 16)),
                     ),
                   ),

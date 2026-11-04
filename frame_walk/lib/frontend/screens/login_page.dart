@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:frame_walk/frontend/widgets/bottom_nav.dart';
 
+import '../../backend/services/auth_service.dart';
 import 'create_account_page.dart';
 
 // The log in page where users can log in to their account
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final AuthService? authService;
+
+  const LoginPage({super.key, this.authService});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -24,6 +26,11 @@ class _LoginPageState extends State<LoginPage> {
   // Whether the password is visible or not
   bool _obscurePassword = true;
 
+  // Whether a log in request is in progress, which disables the button
+  bool _isSubmitting = false;
+
+  late final AuthService _authService = widget.authService ?? AuthService();
+
   @override
   // Gets called when this State is removed from the tree (when it will never be built again)
   void dispose() {
@@ -32,19 +39,26 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // For now, pressing log in button takes you to home page
-  void _login() {
-    if (_formKey.currentState!.validate()) {
-      //   // TODO: Connect to authentication service later.
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(
-      //       content: Text('Login UI works! Authentication not connected yet.'),
-      //     ),
-      //   );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const BottomNav()),
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await _authService.logIn(
+        email: _emailController.text,
+        password: _passwordController.text,
       );
+      if (!mounted) return;
+      // AuthGate at the root has already switched to the home screen
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } on AuthFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message)));
     }
   }
 
@@ -146,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _login,
+                      onPressed: _isSubmitting ? null : _login,
                       child: const Text('Log In', style: TextStyle(fontSize: 16)),
                     ),
                   ),

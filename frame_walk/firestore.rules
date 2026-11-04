@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidUsername(username) {
+      return username is string && username.matches('^[A-Za-z0-9_]{3,20}$');
+    }
+
+    // Account information and statistics. Only the owner can see or change
+    // their own document, and the username can't change after creation.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // Must be created together with a matching username reservation.
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && isValidUsername(request.resource.data.username)
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username.lower())).data.uid == uid;
+
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.username == resource.data.username;
+    }
+
+    // One document per lowercase username, so a name can only be claimed once.
+    // Reservations can never be updated or deleted by clients.
+    match /usernames/{username} {
+      allow get: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username.lower() == username;
+    }
+  }
+}
