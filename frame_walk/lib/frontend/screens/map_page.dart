@@ -6,6 +6,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../models/photo_route.dart';
 import '../theme/app_theme.dart';
 import '../widgets/route_card.dart';
+import '../widgets/route_filter_chips.dart';
+import '../widgets/route_search_bar.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -18,12 +20,13 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   static const _routeColor = Color(0xFF7966FF);
-  final _searchController = TextEditingController();
   final _bookmarkedIds = <String>{};
   GoogleMapController? _mapController;
   BitmapDescriptor? _cameraIcon;
   String _query = '';
-  int? _duration;
+  String _duration = 'Any duration';
+  String _distance = 'Any distance';
+  String _scenery = 'Any scenery';
   _CampusRoute? _selected;
 
   // UI fixtures only: replace with the team's curated route coordinates.
@@ -87,16 +90,29 @@ class _MapPageState extends State<MapPage> {
 
   List<_CampusRoute> get _visibleRoutes => _routes.where((item) {
     final route = item.route;
-    final text = '${route.title} ${route.sceneryTags.join(' ')}'.toLowerCase();
+    final matchesQuery = route.title.toLowerCase().contains(
+      _query.toLowerCase(),
+    );
     final matchesDuration =
-        _duration == null ||
-        (_duration == 15 &&
-            route.durationMinutes >= 10 &&
-            route.durationMinutes <= 15) ||
-        (_duration == 30 &&
+        _duration == 'Any duration' ||
+        (_duration == '0-15 min' && route.durationMinutes <= 15) ||
+        (_duration == '15-30 min' &&
             route.durationMinutes > 15 &&
-            route.durationMinutes <= 30);
-    return text.contains(_query.trim().toLowerCase()) && matchesDuration;
+            route.durationMinutes <= 30) ||
+        (_duration == '30+ min' && route.durationMinutes > 30);
+    final matchesDistance =
+        _distance == 'Any distance' ||
+        (_distance == 'Under 1 mi' && route.distanceMiles < 1) ||
+        (_distance == '1-2 mi' &&
+            route.distanceMiles >= 1 &&
+            route.distanceMiles <= 2) ||
+        (_distance == '2+ mi' && route.distanceMiles > 2);
+    final matchesScenery =
+        _scenery == 'Any scenery' ||
+        route.sceneryTags.any(
+          (tag) => tag.toLowerCase() == _scenery.toLowerCase(),
+        );
+    return matchesQuery && matchesDuration && matchesDistance && matchesScenery;
   }).toList();
 
   @override
@@ -143,19 +159,21 @@ class _MapPageState extends State<MapPage> {
 
   @override
   void dispose() {
-    _searchController.dispose();
     _mapController?.dispose();
     super.dispose();
   }
 
-  void _updateFilters({String? query, int? duration, bool reset = false}) {
+  void _updateFilters({
+    String? query,
+    String? duration,
+    String? distance,
+    String? scenery,
+  }) {
     setState(() {
       if (query != null) _query = query;
-      if (reset) {
-        _duration = null;
-      } else if (duration != null) {
-        _duration = _duration == duration ? null : duration;
-      }
+      if (duration != null) _duration = duration;
+      if (distance != null) _distance = distance;
+      if (scenery != null) _scenery = scenery;
       if (!_visibleRoutes.contains(_selected)) _selected = null;
     });
   }
@@ -271,20 +289,6 @@ class _MapPageState extends State<MapPage> {
     if (mounted && chosen != null) await _selectRoute(chosen);
   }
 
-  Widget _filterChip(String label, bool selected, VoidCallback onTap) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      showCheckmark: false,
-      selectedColor: AppTheme.teal,
-      backgroundColor: const Color(0xFFE2E9DF),
-      side: BorderSide.none,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      labelStyle: TextStyle(color: selected ? Colors.white : AppTheme.black),
-      onSelected: (_) => onTap(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final routes = _visibleRoutes;
@@ -294,87 +298,29 @@ class _MapPageState extends State<MapPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Text(
               'FrameWalk',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextField(
-              controller: _searchController,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: RouteSearchBar(
               onChanged: (value) => _updateFilters(query: value),
-              onSubmitted: (_) => _showRouteList(),
-              textInputAction: TextInputAction.search,
-              style: const TextStyle(color: Colors.white),
-              cursorColor: Colors.white,
-              decoration: InputDecoration(
-                hintText: 'Search routes',
-                hintStyle: const TextStyle(color: Colors.white70),
-                filled: true,
-                fillColor: AppTheme.teal,
-                prefixIcon: IconButton(
-                  tooltip: 'Browse matching routes',
-                  icon: const Icon(Icons.menu, color: Colors.white),
-                  onPressed: _showRouteList,
-                ),
-                suffixIcon: IconButton(
-                  tooltip: _query.isEmpty ? 'Search routes' : 'Clear search',
-                  icon: Icon(
-                    _query.isEmpty ? Icons.search : Icons.close,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    if (_query.isEmpty) {
-                      _showRouteList();
-                    } else {
-                      _searchController.clear();
-                      _updateFilters(query: '');
-                    }
-                  },
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(28),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(28),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(28),
-                  borderSide: const BorderSide(color: Colors.white, width: 2),
-                ),
-              ),
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-            child: Row(
-              children: [
-                _filterChip('Near UW', _duration == null, () {
-                  _updateFilters(reset: true);
-                  _mapController?.animateCamera(
-                    CameraUpdate.newCameraPosition(
-                      const CameraPosition(target: MapPage.uwCampus, zoom: 15),
-                    ),
-                  );
-                }),
-                const SizedBox(width: 10),
-                _filterChip(
-                  '10–15 min',
-                  _duration == 15,
-                  () => _updateFilters(duration: 15),
-                ),
-                const SizedBox(width: 10),
-                _filterChip(
-                  '15–30 min',
-                  _duration == 30,
-                  () => _updateFilters(duration: 30),
-                ),
-              ],
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Center(
+              child: RouteFilterChips(
+                duration: _duration,
+                distance: _distance,
+                scenery: _scenery,
+                onDurationChanged: (value) => _updateFilters(duration: value),
+                onDistanceChanged: (value) => _updateFilters(distance: value),
+                onSceneryChanged: (value) => _updateFilters(scenery: value),
+              ),
             ),
           ),
           Expanded(
@@ -444,16 +390,13 @@ class _MapPageState extends State<MapPage> {
                   child: Material(
                     color: AppTheme.cream,
                     borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      child: Text(
+                    child: TextButton.icon(
+                      onPressed: _showRouteList,
+                      icon: const Icon(Icons.list, size: 18),
+                      label: Text(
                         routes.isEmpty
                             ? 'No matching routes'
-                            : '${routes.length} sample routes · Tap to explore',
-                        style: Theme.of(context).textTheme.labelMedium,
+                            : 'Browse routes (${routes.length})',
                       ),
                     ),
                   ),
