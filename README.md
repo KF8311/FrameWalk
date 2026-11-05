@@ -322,7 +322,7 @@ The project reads the key from **`frame_walk/android/local.properties`**. Don't 
 **Never commit:**
 
 - `frame_walk/android/local.properties`
-- anything containing a real key (text starting with `AIza`)
+- anything containing a real key (text starting with `AIza`), except the Firebase client config files listed in [Firebase Setup](#firebase-setup)
 - keystores (`*.keystore`, `*.jks`) or `key.properties`
 
 **Check before you push.** Run these from the `frame_walk` folder (they work on both macOS and Windows):
@@ -331,7 +331,7 @@ The project reads the key from **`frame_walk/android/local.properties`**. Don't 
 # Should print the .gitignore rule that ignores it. If it prints nothing, STOP and ask the team.
 git check-ignore -v android/local.properties
 
-# Should print nothing. Any output means a key is in a tracked file.
+# Should only list the Firebase client config files. Any other output means a key is in a tracked file.
 git grep -n "AIza"
 
 # Review exactly what you're about to commit.
@@ -394,6 +394,41 @@ Watch the logs while you open the Map tab. Use the **Logcat** tool window in And
 
 - `android/local.properties`, `android/gradlew`, and `android/gradlew.bat` are intentionally **not** in Git. A fresh clone won't have them. Run `flutter pub get` and then `flutter build apk --debug` from `frame_walk` to generate them, then add your `MAPS_API_KEY` line (step 3.8).
 - Running `flutter clean` does **not** delete `local.properties`, so your key line stays.
+
+## Firebase Setup
+
+Login and account data use one Firebase project shared by the whole team: Firebase Auth for email and password sign-in, and Cloud Firestore for account data. Unlike the Maps key, **teammates don't need their own setup**. The config is committed, so `flutter pub get` and `flutter run` are enough.
+
+**Committed config:** these files contain a Firebase API key starting with `AIza`. That's expected, because this key identifies the project rather than granting access. Access to data is controlled by `frame_walk/firestore.rules`. These are the only files allowed to contain `AIza`:
+
+- `frame_walk/lib/firebase_options.dart`
+- `frame_walk/android/app/google-services.json`
+- `frame_walk/ios/Runner/GoogleService-Info.plist`
+
+**Firestore collections:**
+
+| Collection | Document ID | Contents |
+| --- | --- | --- |
+| `users` | Firebase Auth user ID | Username, email, statistics, and created date. Readable only by that user. |
+| `usernames` | Lowercase username | The owner's user ID. Keeps usernames unique. |
+
+Passwords are handled by Firebase Auth and are never stored in Firestore.
+
+**If you change `firestore.rules`,** deploy them. This requires the [Firebase CLI](https://firebase.google.com/docs/cli) and access to the project:
+
+```bash
+cd frame_walk
+firebase deploy --only firestore:rules
+```
+
+**If an app ID changes or a platform is added,** regenerate the config with the [FlutterFire CLI](https://firebase.google.com/docs/flutter/setup) by running `flutterfire configure` from `frame_walk`, then commit the result.
+
+**Running the auth tests** (they use fakes, so they don't touch the real project):
+
+```bash
+cd frame_walk
+flutter test lib/backend/test lib/frontend/test
+```
 
 
 ## Links
