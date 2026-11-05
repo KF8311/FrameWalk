@@ -4,6 +4,8 @@ import '../../models/photo_route.dart';
 import '../widgets/route_card.dart';
 import '../widgets/route_search_bar.dart';
 import '../widgets/route_filter_chips.dart';
+import 'route_info_page.dart';
+import '../../models/mock_route_data.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -96,11 +98,20 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  //TODO: Replace this with navigation to route detail page.
-  void _openRoute(PhotoRoute route) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Selected ${route.title}')));
-  }
+  //TODO: Replace this with actual data
+void _openRoute(PhotoRoute route) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => RouteInfoPage(
+        route: route,
+        stops: MockRouteData.getStops(route.id),
+        routePoints: MockRouteData.getRoutePoints(route.id),
+      ),
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
