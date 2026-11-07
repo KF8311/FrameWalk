@@ -6,6 +6,7 @@ on:
       - 'frame_walk/lib/backend/services/**'
       - 'frame_walk/lib/backend/test/**'
       - 'frame_walk/lib/main.dart'
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -22,9 +23,12 @@ jobs:
       
       - name: Install dependencies
         run: flutter pub get
+        working-directory: frame_walk
 
       - name: Lint
         run: flutter analyze
+        working-directory: frame_walk
 
       - name: Run tests
         run: flutter test
+        working-directory: frame_walk
