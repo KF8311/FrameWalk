@@ -1,72 +1,106 @@
-
 import 'package:flutter/material.dart';
-import 'package:frame_walk/backend/services/route_manager.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
 import '../../backend/services/route_manager.dart';
+import '../../models/mock_route_data.dart';
 import '../../models/route_stop.dart';
+import '../../providers/route_provider.dart';
+import '../theme/app_theme.dart';
 
 class RouteInfoPage extends StatefulWidget {
-  const RouteInfoPage({
-    super.key,
-    required this.route,
-    required this.stops,
-    required this.routePoints,
-  });
+  const RouteInfoPage({super.key, required this.route});
 
   final WalkingRoute route;
-  final List<RouteStop> stops;
-  final List<LatLng> routePoints;
 
   @override
   State<RouteInfoPage> createState() => _RouteInfoPageState();
 }
 
 class _RouteInfoPageState extends State<RouteInfoPage> {
-  late bool _isBookmarked;
+  GoogleMapController? _mapController;
+
+  // TODO: replace MockRouteData with real stop / geometry lookups.
+  late final List<RouteStop> _stops;
+  late final List<LatLng> _routePoints;
 
   @override
   void initState() {
     super.initState();
-    _isBookmarked = widget.route.isBookmarked;
+    _stops = MockRouteData.getStops(widget.route.id);
+    _routePoints = MockRouteData.getRoutePoints(widget.route.id);
   }
 
-  void _toggleBookmark() {
-    setState(() {
-      _isBookmarked = !_isBookmarked;
-    });
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
+  }
 
-    // TODO: Save the bookmark state to your database.
+  // Zoom the map so the whole route is visible (same idea as the Map page).
+  Future<void> _fitRoute() async {
+    if (_routePoints.isEmpty) return;
+    // Let the map lay out before animating to bounds.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+
+    var south = _routePoints.first.latitude;
+    var north = south;
+    var west = _routePoints.first.longitude;
+    var east = west;
+    for (final point in _routePoints) {
+      if (point.latitude < south) south = point.latitude;
+      if (point.latitude > north) north = point.latitude;
+      if (point.longitude < west) west = point.longitude;
+      if (point.longitude > east) east = point.longitude;
+    }
+    await _mapController?.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: LatLng(south, west),
+          northeast: LatLng(north, east),
+        ),
+        44,
+      ),
+    );
   }
 
   Set<Marker> _buildMarkers() {
-    return widget.stops.map((stop) {
+    return _stops.map((stop) {
       return Marker(
         markerId: MarkerId(stop.id),
-        position: LatLng(
-          stop.latitude,
-          stop.longitude,
-        ),
-        infoWindow: InfoWindow(
-          title: stop.name,
-          snippet: stop.prompt,
-        ),
+        position: LatLng(stop.latitude, stop.longitude),
+        infoWindow: InfoWindow(title: stop.name, snippet: stop.prompt),
       );
     }).toSet();
   }
 
-  Set<Polyline> _buildPolylines(Color routeColor) {
-    if (widget.routePoints.isEmpty) {
-      return {};
-    }
+  // Same look as the selected route on the Map page.
+  Set<Polyline> _buildPolylines() {
+    if (_routePoints.isEmpty) return {};
 
     return {
       Polyline(
-        polylineId: const PolylineId('route'),
-        points: widget.routePoints,
-        color: routeColor,
-        width: 5,
+        polylineId: PolylineId(widget.route.id),
+        points: _routePoints,
+        color: AppTheme.teal,
+        width: 6,
       ),
+    };
+  }
+
+  // White dots at each bend, like the Map page.
+  Set<Circle> _buildCircles() {
+    return {
+      for (var i = 1; i < _routePoints.length - 1; i++)
+        Circle(
+          circleId: CircleId('${widget.route.id}-$i'),
+          center: _routePoints[i],
+          radius: 7,
+          fillColor: Colors.white,
+          strokeColor: AppTheme.teal,
+          strokeWidth: 2,
+        ),
     };
   }
 
@@ -87,25 +121,22 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: widget.routePoints.isEmpty
-                          ? const Center(
-                              child: Text('Route map unavailable'),
-                            )
+                      child: _routePoints.isEmpty
+                          ? const Center(child: Text('Route map unavailable'))
                           : GoogleMap(
                               initialCameraPosition: CameraPosition(
-                                target: widget.routePoints.first,
+                                target: _routePoints.first,
                                 zoom: 15,
                               ),
                               markers: _buildMarkers(),
-                              polylines: _buildPolylines(
-                                colorScheme.primary,
-                              ),
+                              polylines: _buildPolylines(),
+                              circles: _buildCircles(),
                               zoomControlsEnabled: false,
                               mapToolbarEnabled: false,
                               myLocationButtonEnabled: false,
                               onMapCreated: (controller) {
-                                // TODO: Adjust camera to show the
-                                // entire route when needed.
+                                _mapController = controller;
+                                _fitRoute();
                               },
                             ),
                     ),
@@ -124,21 +155,28 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                       ),
                     ),
 
-                    // Bookmark button.
+                    // Bookmark button, shared with the rest of the app.
                     Positioned(
                       top: 8,
                       right: 8,
-                      child: IconButton(
-                        onPressed: _toggleBookmark,
-                        icon: Icon(
-                          _isBookmarked
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor: colorScheme.surface,
-                          foregroundColor: colorScheme.onSurface,
-                        ),
+                      child: Consumer<RouteProvider>(
+                        builder: (context, provider, _) {
+                          final isBookmarked =
+                              provider.isBookmarked(widget.route.id);
+                          return IconButton(
+                            onPressed: () =>
+                                provider.toggleBookmark(widget.route.id),
+                            icon: Icon(
+                              isBookmarked
+                                  ? Icons.bookmark
+                                  : Icons.bookmark_border,
+                            ),
+                            style: IconButton.styleFrom(
+                              backgroundColor: colorScheme.surface,
+                              foregroundColor: colorScheme.onSurface,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -153,9 +191,7 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                   children: [
                     Text(
                       widget.route.name,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium,
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
 
                     const SizedBox(height: 12),
@@ -169,9 +205,7 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                           size: 20,
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          '${widget.route.estimatedMinutes} min',
-                        ),
+                        Text('${widget.route.estimatedMinutes} min'),
 
                         const SizedBox(width: 12),
 
@@ -181,7 +215,7 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                           size: 20,
                         ),
                         const SizedBox(width: 6),
-                        Text('${widget.stops.length} stops'),
+                        Text('${_stops.length} stops'),
 
                         const SizedBox(width: 12),
 
@@ -194,8 +228,7 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                                 .map((tag) {
                               return Chip(
                                 label: Text(tag),
-                                visualDensity:
-                                    VisualDensity.compact,
+                                visualDensity: VisualDensity.compact,
                               );
                             }).toList(),
                           ),
@@ -221,30 +254,24 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
 
                     Text(
                       'Route Stops',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
 
                     const SizedBox(height: 12),
 
                     // Expandable stops.
-                    ...widget.stops.asMap().entries.map((entry) {
+                    ..._stops.asMap().entries.map((entry) {
                       final index = entry.key;
                       final stop = entry.value;
 
                       return Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: 12,
-                        ),
+                        padding: const EdgeInsets.only(bottom: 12),
                         child: Row(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             CircleAvatar(
                               radius: 22,
-                              backgroundColor:
-                                  colorScheme.primary,
+                              backgroundColor: colorScheme.primary,
                               child: Text(
                                 '${index + 1}',
                                 style: TextStyle(
@@ -260,18 +287,14 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                               child: Card(
                                 elevation: 2,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: ExpansionTile(
                                   title: Text(
                                     stop.name,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                    ),
+                                    style: const TextStyle(fontSize: 14),
                                   ),
-                                  childrenPadding:
-                                      const EdgeInsets.fromLTRB(
+                                  childrenPadding: const EdgeInsets.fromLTRB(
                                     16,
                                     0,
                                     16,
@@ -279,8 +302,7 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                                   ),
                                   children: [
                                     Align(
-                                      alignment:
-                                          Alignment.centerLeft,
+                                      alignment: Alignment.centerLeft,
                                       child: Text(stop.prompt),
                                     ),
                                   ],
