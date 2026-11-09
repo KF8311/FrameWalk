@@ -60,10 +60,11 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 8),
-          // Only the list rebuilds when routes or bookmarks change.
+          // Consumer is this low so that only the list rebuilds when routes or bookmarks change.
           Expanded(
             child: Consumer<RouteProvider>(
               builder: (context, provider, _) {
+                // gets the filtered list of routes based on the current search params
                 final routes = provider.search(
                   query: _query,
                   duration: _duration,

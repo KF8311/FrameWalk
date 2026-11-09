@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/mock_route_data.dart';
-import '../models/photo_route.dart';
 import '../backend/services/route_manager.dart';
 
 // Single source of truth for routes and bookmarks.

@@ -29,9 +29,9 @@ class _MapPageState extends State<MapPage> {
   String _duration = RouteProvider.anyDuration;
   String _distance = RouteProvider.anyDistance;
   String _scenery = RouteProvider.anyScenery;
-  String? _selectedId; // id only; the route itself lives in RouteProvider
+  String? _selectedId; // id of the selected route only, the route itself lives in RouteProvider
 
-  /// Routes that pass the filters AND have map coordinates.
+  // Returns a list of WalkingRoute's to show on the map
   List<WalkingRoute> _visibleRoutes(RouteProvider provider) => provider
       .search(
         query: _query,
@@ -39,6 +39,7 @@ class _MapPageState extends State<MapPage> {
         distance: _distance,
         scenery: _scenery,
       )
+      // checks that the mock route data has route points for the route r
       .where((r) => MockRouteData.getRoutePoints(r.id).isNotEmpty)
       .toList();
 
@@ -96,13 +97,14 @@ class _MapPageState extends State<MapPage> {
     String? distance,
     String? scenery,
   }) {
+    // uses context.read so that this widget doesn't rebuild when changes happeb
     final provider = context.read<RouteProvider>();
     setState(() {
       if (query != null) _query = query;
       if (duration != null) _duration = duration;
       if (distance != null) _distance = distance;
       if (scenery != null) _scenery = scenery;
-      // Drop the selection if the route is no longer visible.
+      // Deselects a selected route if route filters change to not include it
       if (!_visibleRoutes(provider).any((r) => r.id == _selectedId)) {
         _selectedId = null;
       }
