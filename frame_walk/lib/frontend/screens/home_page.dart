@@ -46,6 +46,7 @@ class _HomePageState extends State<HomePage> {
   ];
 
   // gets list of routes based on chosen filters/query
+  // should this be done through route manager or locally here?
   List<PhotoRoute> get _filteredRoutes {
     return _routes.where((route) {
       final matchesQuery = route.title.toLowerCase().contains(
@@ -82,6 +83,7 @@ class _HomePageState extends State<HomePage> {
     }).toList();
   }
 
+  // in future do this via provider
   void _toggleBookmark(PhotoRoute route) {
     setState(() {
       final index = _routes.indexWhere(
@@ -98,7 +100,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  //TODO: Replace this with actual data
+  //TODO: Replace this with actual data - ideally would just pass in a route, not route, stops, and routePoints
 void _openRoute(PhotoRoute route) {
   Navigator.push(
     context,

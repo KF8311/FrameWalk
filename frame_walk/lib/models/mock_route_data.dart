@@ -1,10 +1,14 @@
-
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../backend/services/route_manager.dart';
 import 'route_stop.dart';
 
 // mock route data to show when opening a route info page
+// and to seed RouteProvider until real data exists.
 class MockRouteData {
+  // Default map center (UW campus).
+  static const LatLng uwCampus = LatLng(47.6553, -122.3035);
+
   // RED SQUARE WALK
   static const List<RouteStop> redSquareStops = [
     RouteStop(
@@ -125,6 +129,95 @@ class MockRouteData {
     LatLng(47.6498, -122.3040),
   ];
 
+  // MAP-ONLY CAMPUS LOOPS
+  // UI fixtures: replace with the team's curated route coordinates.
+  // These paths are illustrative, not verified walking directions.
+
+  static const List<LatLng> burkeLoopPoints = [
+    LatLng(47.6605, -122.3115),
+    LatLng(47.6604, -122.3095),
+    LatLng(47.6597, -122.3088),
+    LatLng(47.6586, -122.3090),
+    LatLng(47.6583, -122.3108),
+    LatLng(47.6592, -122.3117),
+    LatLng(47.6605, -122.3115),
+  ];
+
+  static const List<LatLng> quadLoopPoints = [
+    LatLng(47.6584, -122.3078),
+    LatLng(47.6588, -122.3063),
+    LatLng(47.6582, -122.3053),
+    LatLng(47.6569, -122.3055),
+    LatLng(47.6566, -122.3067),
+    LatLng(47.6572, -122.3080),
+    LatLng(47.6584, -122.3078),
+  ];
+
+  static const List<LatLng> drumhellerLoopPoints = [
+    LatLng(47.6540, -122.3070),
+    LatLng(47.6541, -122.3055),
+    LatLng(47.6536, -122.3043),
+    LatLng(47.6524, -122.3042),
+    LatLng(47.6518, -122.3056),
+    LatLng(47.6523, -122.3071),
+    LatLng(47.6540, -122.3070),
+  ];
+
+  // ROUTE DEFINITIONS
+  // Used to seed RouteProvider. `final` (not const) because WalkingRoute
+  // validates its fields in its constructor. stopIds come from the stop
+  // lists above so the two can't drift apart.
+  static final List<WalkingRoute> routes = [
+    WalkingRoute(
+      id: '1',
+      name: 'Red Square Walk',
+      stopIds: redSquareStops.map((s) => s.id).toList(),
+      estimatedMinutes: 10,
+      distanceMiles: 0.5,
+      sceneryTags: const ['Architecture', 'Urban'],
+    ),
+    WalkingRoute(
+      id: '2',
+      name: 'UW Nature Walk',
+      stopIds: uwNatureStops.map((s) => s.id).toList(),
+      estimatedMinutes: 20,
+      distanceMiles: 1.2,
+      sceneryTags: const ['Nature', 'Urban'],
+    ),
+    WalkingRoute(
+      id: '3',
+      name: 'Waterfront Views',
+      stopIds: waterfrontStops.map((s) => s.id).toList(),
+      estimatedMinutes: 30,
+      distanceMiles: 1.8,
+      sceneryTags: const ['Water', 'Nature'],
+    ),
+    WalkingRoute(
+      id: 'map-burke',
+      name: 'Burke Museum Loop',
+      stopIds: const [],
+      estimatedMinutes: 12,
+      distanceMiles: 0.5,
+      sceneryTags: const ['Architecture', 'Urban'],
+    ),
+    WalkingRoute(
+      id: 'map-quad',
+      name: 'UW Quad Walk',
+      stopIds: const [],
+      estimatedMinutes: 15,
+      distanceMiles: 0.6,
+      sceneryTags: const ['Nature', 'Architecture'],
+    ),
+    WalkingRoute(
+      id: 'map-drumheller',
+      name: 'Drumheller Fountain Loop',
+      stopIds: const [],
+      estimatedMinutes: 25,
+      distanceMiles: 1.0,
+      sceneryTags: const ['Water', 'Nature'],
+    ),
+  ];
+
   // GET STOPS FOR A ROUTE
   static List<RouteStop> getStops(String routeId) {
     switch (routeId) {
@@ -148,6 +241,12 @@ class MockRouteData {
         return uwNatureRoutePoints;
       case '3':
         return waterfrontRoutePoints;
+      case 'map-burke':
+        return burkeLoopPoints;
+      case 'map-quad':
+        return quadLoopPoints;
+      case 'map-drumheller':
+        return drumhellerLoopPoints;
       default:
         return [];
     }

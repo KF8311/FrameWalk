@@ -1,8 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:frame_walk/backend/services/route_manager.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../../models/photo_route.dart';
+import '../../backend/services/route_manager.dart';
 import '../../models/route_stop.dart';
 
 class RouteInfoPage extends StatefulWidget {
@@ -13,7 +14,7 @@ class RouteInfoPage extends StatefulWidget {
     required this.routePoints,
   });
 
-  final PhotoRoute route;
+  final WalkingRoute route;
   final List<RouteStop> stops;
   final List<LatLng> routePoints;
 
@@ -151,7 +152,7 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.route.title,
+                      widget.route.name,
                       style: Theme.of(context)
                           .textTheme
                           .headlineMedium,
@@ -169,7 +170,7 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '${widget.route.durationMinutes} min',
+                          '${widget.route.estimatedMinutes} min',
                         ),
 
                         const SizedBox(width: 12),
