@@ -7,12 +7,18 @@ import '../backend/services/route_manager.dart';
 // Single source of truth for routes and bookmarks.
 class RouteProvider extends ChangeNotifier {
   // Defaults must match the strings used by RouteFilterChips.
+  // These will be used for the placeholder "any" filter option for duration, distance, and scenery
   static const anyDuration = 'Any duration';
   static const anyDistance = 'Any distance';
   static const anyScenery = 'Any scenery';
 
+  // Creates a RouteProvider 
+  // Params:
+  //  manager - the RouteManager associated with this RouteProvider. can be null for testing
+  //  purposes (unit tests can build their own RouteManagers with their own routes/mock data)
+  //  seedMockData - true if we're using mock data, for now true until we add in other data
   RouteProvider({RouteManager? manager, bool seedMockData = true})
-      : _manager = manager ?? RouteManager() {
+    : _manager = manager ?? RouteManager() {
     if (seedMockData) {
       for (final route in MockRouteData.routes) {
         _manager.addRoute(route);
@@ -26,6 +32,7 @@ class RouteProvider extends ChangeNotifier {
 
   List<WalkingRoute> get bookmarkedRoutes => _manager.getBookmarkedRoutes();
 
+  // gets a WalkingRoute by ID
   WalkingRoute? byId(String? id) {
     if (id == null || id.trim().isEmpty) return null;
     return _manager.getRoute(id);
@@ -35,6 +42,7 @@ class RouteProvider extends ChangeNotifier {
 
   /// Routes matching the search text and every selected filter.
   /// Each page keeps its own filter selections and passes them in.
+  /// parameters default to default values
   List<WalkingRoute> search({
     String query = '',
     String duration = anyDuration,
@@ -70,6 +78,7 @@ class RouteProvider extends ChangeNotifier {
     }).toList();
   }
 
+  // notifies listeners to rebuild if the bookmark toggle was successful
   void toggleBookmark(String routeId) {
     if (_manager.toggleBookmark(routeId)) notifyListeners();
   }
@@ -79,24 +88,13 @@ class RouteProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  //unsure if we need this
   void removeRoute(String routeId) {
     if (_manager.removeRoute(routeId)) notifyListeners();
   }
 
+  //unsure if we need this
   void updateRoute(WalkingRoute route) {
     if (_manager.updateRoute(route)) notifyListeners();
   }
-}
-
-/// Bridge so RouteCard / RouteInfoPage keep working with PhotoRoute until
-/// they are migrated to WalkingRoute.
-extension WalkingRouteUi on WalkingRoute {
-  PhotoRoute toPhotoRoute() => PhotoRoute(
-    id: id,
-    title: name,
-    durationMinutes: estimatedMinutes,
-    distanceMiles: distanceMiles,
-    sceneryTags: sceneryTags,
-    isBookmarked: isBookmarked,
-  );
 }

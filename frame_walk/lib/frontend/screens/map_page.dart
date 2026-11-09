@@ -139,22 +139,6 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  void _openRoute(WalkingRoute route) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RouteInfoPage(route: route),
-      ),
-    );
-  }
-
-  Widget _routeCard(WalkingRoute route, VoidCallback onTap) => RouteCard(
-        route: route,
-        onTap: onTap,
-        onBookmarkTap: () =>
-            context.read<RouteProvider>().toggleBookmark(route.id),
-      );
-
   Future<void> _showRouteList() async {
     FocusScope.of(context).unfocus();
     final chosen = await showModalBottomSheet<WalkingRoute>(
@@ -199,9 +183,11 @@ class _MapPageState extends State<MapPage> {
                           itemCount: routes.length,
                           itemBuilder: (context, index) {
                             final route = routes[index];
-                            return _routeCard(
-                              route,
-                              () => Navigator.pop(sheetContext, route),
+                            return RouteCard(
+                              route: route,
+                              onTap: () => Navigator.pop(sheetContext, route),
+                              onBookmarkTap: () =>
+                                  provider.toggleBookmark(route.id),
                             );
                           },
                         ),
@@ -212,7 +198,7 @@ class _MapPageState extends State<MapPage> {
         ),
       ),
     );
-    if (mounted && chosen != null) _openRoute(chosen);
+    if (mounted && chosen != null) RouteInfoPage.open(context, chosen);
   }
 
   @override
@@ -362,7 +348,12 @@ class _MapPageState extends State<MapPage> {
                           onPressed: () => setState(() => _selectedId = null),
                         ),
                       ),
-                      _routeCard(selected, () => _openRoute(selected)),
+                      RouteCard(
+                        route: selected,
+                        onTap: () => RouteInfoPage.open(context, selected),
+                        onBookmarkTap: () =>
+                            provider.toggleBookmark(selected.id),
+                      ),
                     ],
                   ),
                 ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../backend/services/route_manager.dart';
 import '../../providers/route_provider.dart';
 import '../widgets/route_card.dart';
 import 'route_info_page.dart';
@@ -16,15 +15,6 @@ class ActivityPage extends StatefulWidget {
 class _ActivityPageState extends State<ActivityPage> {
   // 0 = Previous Walks, 1 = Saved Walks
   int _selectedTab = 0;
-
-  void _openRoute(WalkingRoute route) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RouteInfoPage(route: route),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +56,7 @@ class _ActivityPageState extends State<ActivityPage> {
         Expanded(
           child: _selectedTab == 0
               // No previous walks yet.
-              ? const SizedBox.shrink()
+              ? const Center(child: Text('No previous walks yet.'))
               : Consumer<RouteProvider>(
                   builder: (context, provider, _) {
                     final savedRoutes = provider.bookmarkedRoutes;
@@ -82,7 +72,7 @@ class _ActivityPageState extends State<ActivityPage> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: RouteCard(
                             route: route,
-                            onTap: () => _openRoute(route),
+                            onTap: () => RouteInfoPage.open(context, route),
                             onBookmarkTap: () =>
                                 provider.toggleBookmark(route.id),
                           ),

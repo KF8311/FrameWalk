@@ -13,6 +13,15 @@ class RouteInfoPage extends StatefulWidget {
 
   final WalkingRoute route;
 
+  /// Opens the info page for [route]. Use this from any screen instead of
+  /// building the MaterialPageRoute by hand.
+  static Future<void> open(BuildContext context, WalkingRoute route) {
+    return Navigator.push<void>(
+      context,
+      MaterialPageRoute(builder: (_) => RouteInfoPage(route: route)),
+    );
+  }
+
   @override
   State<RouteInfoPage> createState() => _RouteInfoPageState();
 }
