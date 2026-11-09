@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/route_provider.dart';
+import '../../backend/providers/route_provider.dart';
 import '../widgets/route_card.dart';
 import '../widgets/route_filter_chips.dart';
 import '../widgets/route_search_bar.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import '../models/mock_route_data.dart';
-import '../backend/services/route_manager.dart';
+import '../../models/mock_route_data.dart';
+import '../services/route_manager.dart';
 
 // Single source of truth for routes and bookmarks.
 class RouteProvider extends ChangeNotifier {
@@ -11,11 +11,11 @@ class RouteProvider extends ChangeNotifier {
   static const anyDistance = 'Any distance';
   static const anyScenery = 'Any scenery';
 
-  // Creates a RouteProvider 
-  // Params:
-  //  manager - the RouteManager associated with this RouteProvider. can be null for testing
-  //  purposes (unit tests can build their own RouteManagers with their own routes/mock data)
-  //  seedMockData - true if we're using mock data, for now true until we add in other data
+  /// Creates a RouteProvider 
+  /// Params:
+  ///  manager - the RouteManager associated with this RouteProvider. can be null for testing
+  ///  purposes (unit tests can build their own RouteManagers with their own routes/mock data)
+  ///  seedMockData - true if we're using mock data, for now true until we add in other data
   RouteProvider({RouteManager? manager, bool seedMockData = true})
     : _manager = manager ?? RouteManager() {
     if (seedMockData) {

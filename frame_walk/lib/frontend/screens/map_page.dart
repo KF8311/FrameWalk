@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/mock_route_data.dart';
 import '../../backend/services/route_manager.dart';
-import '../../providers/route_provider.dart';
+import '../../backend/providers/route_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/route_card.dart';
 import '../widgets/route_filter_chips.dart';

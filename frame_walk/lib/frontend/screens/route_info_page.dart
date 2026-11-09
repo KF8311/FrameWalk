@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../backend/services/route_manager.dart';
 import '../../models/mock_route_data.dart';
 import '../../models/route_stop.dart';
-import '../../providers/route_provider.dart';
+import '../../backend/providers/route_provider.dart';
 import '../theme/app_theme.dart';
 
 class RouteInfoPage extends StatefulWidget {
