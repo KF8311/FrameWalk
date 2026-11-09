@@ -21,6 +21,67 @@ service cloud.firestore {
       allow update: if request.auth != null
         && request.auth.uid == uid
         && request.resource.data.username == resource.data.username;
+
+      // Walks the user has started (status 'active') or finished
+      // ('completed'). Written by WalkRepository. Cancelled walks are
+      // deleted, which is only allowed while a walk is still active, so
+      // completed walks are kept as history.
+      match /walks/{walkId} {
+        function isOwner() {
+          return request.auth != null && request.auth.uid == uid;
+        }
+
+        function hasValidFields(data) {
+          return data.keys().hasOnly([
+              'userId', 'routeId', 'routeTitle', 'status', 'trackingMode',
+              'startedAt', 'completedAt', 'stopIds', 'promptIds',
+              'reachedStopIds', 'stops', 'distanceMeters',
+              'locationPointCount', 'lastLocationAt', 'updatedAt'
+            ])
+            && data.userId == uid
+            && data.routeId is string
+            && data.startedAt is timestamp
+            && data.status in ['active', 'completed'];
+        }
+
+        allow read: if isOwner();
+
+        allow create: if isOwner()
+          && hasValidFields(request.resource.data)
+          && request.resource.data.status == 'active'
+          && !('completedAt' in request.resource.data);
+
+        // Only an active walk can change. The route and start time are fixed.
+        allow update: if isOwner()
+          && resource.data.status == 'active'
+          && hasValidFields(request.resource.data)
+          && request.resource.data.routeId == resource.data.routeId
+          && request.resource.data.startedAt == resource.data.startedAt
+          && (request.resource.data.status == 'active'
+            || (request.resource.data.completedAt is timestamp
+              && request.resource.data.completedAt >= resource.data.startedAt));
+
+        allow delete: if isOwner() && resource.data.status == 'active';
+
+        // GPS history recorded during the walk.
+        match /locationPoints/{pointId} {
+          allow read, delete: if isOwner();
+
+          allow create, update: if isOwner()
+            && request.resource.data.keys().hasOnly([
+              'sequence', 'latitude', 'longitude', 'accuracyMeters',
+              'recordedAt', 'speedMetersPerSecond'
+            ])
+            && request.resource.data.sequence is int
+            && request.resource.data.latitude is number
+            && request.resource.data.latitude >= -90
+            && request.resource.data.latitude <= 90
+            && request.resource.data.longitude is number
+            && request.resource.data.longitude >= -180
+            && request.resource.data.longitude <= 180
+            && request.resource.data.recordedAt is timestamp;
+        }
+      }
     }
 
     // One document per lowercase username, so a name can only be claimed once.

@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../models/photo_route.dart';
 import '../../models/route_stop.dart';
+import 'active_walk_page.dart';
 
 class RouteInfoPage extends StatefulWidget {
   const RouteInfoPage({
@@ -210,7 +211,16 @@ class _RouteInfoPageState extends State<RouteInfoPage> {
                         width: 200,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ActiveWalkPage(
+                                route: widget.route,
+                                stops: widget.stops,
+                                routePoints: widget.routePoints,
+                              ),
+                            ),
+                          ),
                           child: const Text('Start Walk'),
                         ),
                       ),
