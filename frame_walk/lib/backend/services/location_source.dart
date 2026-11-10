@@ -189,8 +189,10 @@ class GeolocatorLocationSource implements LocationSource {
         accuracy: LocationAccuracy.high,
         distanceFilter: distanceFilter,
         activityType: ActivityType.fitness,
-        // Lets iOS power down GPS when the user stops moving for a while.
-        pauseLocationUpdatesAutomatically: true,
+        // Off: users stand still at photo stops, and once iOS auto-pauses
+        // updates it doesn't resume them by itself. Tracking only runs while
+        // FrameWalk is on screen, so keeping GPS on costs little extra.
+        pauseLocationUpdatesAutomatically: false,
         allowBackgroundLocationUpdates: false,
         showBackgroundLocationIndicator: false,
       );

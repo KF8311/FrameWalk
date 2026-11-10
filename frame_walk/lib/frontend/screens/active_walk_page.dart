@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -11,6 +12,13 @@ import '../../backend/services/walk_repository.dart';
 import '../../backend/services/walk_tracking_service.dart';
 import '../../models/location_point.dart';
 import '../../models/route_stop.dart';
+
+// iOS apps can't open the device-wide Location Services switch directly; the
+// settings button opens FrameWalk's own Settings page instead, so iOS users
+// are told where the switch is.
+bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+const _iosLocationServicesPath =
+    'Settings > Privacy & Security > Location Services';
 
 // Records the user's walk along [route] while this page is on screen.
 class ActiveWalkPage extends StatefulWidget {
@@ -191,11 +199,14 @@ class _ActiveWalkPageState extends State<ActiveWalkPage>
     Widget? action;
     switch (_service.readiness) {
       case LocationReadiness.serviceDisabled:
-        text = 'Location services are turned off. Turn them on to track '
-            'your walk.';
+        text = _isIOS
+            ? 'Location Services are turned off. Turn them on in '
+                '$_iosLocationServicesPath to track your walk.'
+            : 'Location services are turned off. Turn them on to track '
+                'your walk.';
         action = ElevatedButton(
           onPressed: _service.openLocationSettings,
-          child: const Text('Open location settings'),
+          child: Text(_isIOS ? 'Open Settings' : 'Open location settings'),
         );
       case LocationReadiness.denied:
         text = 'FrameWalk needs your location to follow you along the route '
@@ -378,7 +389,10 @@ class _SignalBanner extends StatelessWidget {
         text = 'No recent GPS update. Your location will update as you walk.';
         onFix = () => service.resumeTracking();
       case SignalStatus.gpsDisabled:
-        text = 'Location services are off. Turn them on to keep tracking.';
+        text = _isIOS
+            ? 'Location Services are off. Turn them on in '
+                '$_iosLocationServicesPath to keep tracking.'
+            : 'Location services are off. Turn them on to keep tracking.';
         onFix = service.openLocationSettings;
         fixLabel = 'Settings';
       case SignalStatus.permissionRevoked:

@@ -1,4 +1,5 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frame_walk/backend/services/location_source.dart';
@@ -88,6 +89,21 @@ void main() {
         findsOneWidget);
     await tester.tap(find.text('Open location settings'));
     expect(location.locationSettingsOpened, 1);
+  });
+
+  testWidgets('on iOS, says where to turn Location Services back on',
+      (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    location.serviceEnabled = false;
+    await openPage(tester);
+
+    expect(
+      find.textContaining('Privacy & Security > Location Services'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Open Settings'));
+    expect(location.locationSettingsOpened, 1);
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('shows progress and finishes the walk', (tester) async {
