@@ -6,19 +6,13 @@ import 'package:frame_walk/backend/services/walk_repository.dart';
 import 'package:frame_walk/backend/services/walk_tracking_service.dart';
 import 'package:frame_walk/frontend/screens/active_walk_page.dart';
 import 'package:frame_walk/models/mock_route_data.dart';
-import 'package:frame_walk/models/photo_route.dart';
 
 import '../../backend/test/fakes/fake_location_source.dart';
 
 void main() {
   const userId = 'user-1';
-  const route = PhotoRoute(
-    id: '1',
-    title: 'Red Square Walk',
-    durationMinutes: 30,
-    distanceMiles: 1,
-    sceneryTags: ['Architecture'],
-  );
+  // Red Square Walk, the same seeded route the app shows.
+  final route = MockRouteData.routes.firstWhere((r) => r.id == '1');
 
   late FakeFirebaseFirestore firestore;
   late FakeLocationSource location;

@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../backend/services/location_source.dart';
+import '../../backend/services/route_manager.dart';
 import '../../backend/services/route_progress_tracker.dart';
 import '../../backend/services/walk_repository.dart';
 import '../../backend/services/walk_tracking_service.dart';
 import '../../models/location_point.dart';
-import '../../models/photo_route.dart';
 import '../../models/route_stop.dart';
 
 // Records the user's walk along [route] while this page is on screen.
@@ -24,7 +24,7 @@ class ActiveWalkPage extends StatefulWidget {
     this.showMap = true,
   });
 
-  final PhotoRoute route;
+  final WalkingRoute route;
   final List<RouteStop> stops;
   final List<LatLng> routePoints;
 
@@ -93,7 +93,7 @@ class _ActiveWalkPageState extends State<ActiveWalkPage>
     await _service.startWalk(
       userId: userId,
       routeId: widget.route.id,
-      routeTitle: widget.route.title,
+      routeTitle: widget.route.name,
       stops: widget.stops,
       routePath: widget.routePoints
           .map((p) => GeoCoordinate(p.latitude, p.longitude))
@@ -151,7 +151,7 @@ class _ActiveWalkPageState extends State<ActiveWalkPage>
         if (!didPop && phase == WalkPhase.active) _confirmCancel();
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(widget.route.title)),
+        appBar: AppBar(title: Text(widget.route.name)),
         body: SafeArea(child: _buildBody(context)),
       ),
     );
