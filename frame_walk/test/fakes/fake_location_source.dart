@@ -91,10 +91,9 @@ LocationSample sampleAt(
   double longitude,
   DateTime time, {
   double accuracy = 5,
-}) =>
-    LocationSample(
-      latitude: latitude,
-      longitude: longitude,
-      accuracyMeters: accuracy,
-      recordedAt: time,
-    );
+}) => LocationSample(
+  latitude: latitude,
+  longitude: longitude,
+  accuracyMeters: accuracy,
+  recordedAt: time,
+);

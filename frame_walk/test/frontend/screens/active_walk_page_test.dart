@@ -8,7 +8,7 @@ import 'package:frame_walk/backend/services/walk_tracking_service.dart';
 import 'package:frame_walk/frontend/screens/active_walk_page.dart';
 import 'package:frame_walk/models/mock_route_data.dart';
 
-import '../../backend/test/fakes/fake_location_source.dart';
+import '../../fakes/fake_location_source.dart';
 
 void main() {
   const userId = 'user-1';
@@ -61,8 +61,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('explains a denied permission and lets the user try again',
-      (tester) async {
+  testWidgets('explains a denied permission and lets the user try again', (
+    tester,
+  ) async {
     location.permission = LocationPermissionStatus.denied;
     location.answerToRequest = LocationPermissionStatus.denied;
     await openPage(tester);
@@ -85,14 +86,17 @@ void main() {
     location.serviceEnabled = false;
     await openPage(tester);
 
-    expect(find.textContaining('Location services are turned off'),
-        findsOneWidget);
+    expect(
+      find.textContaining('Location services are turned off'),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Open location settings'));
     expect(location.locationSettingsOpened, 1);
   });
 
-  testWidgets('on iOS, says where to turn Location Services back on',
-      (tester) async {
+  testWidgets('on iOS, says where to turn Location Services back on', (
+    tester,
+  ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     location.serviceEnabled = false;
     await openPage(tester);

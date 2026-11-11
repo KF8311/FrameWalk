@@ -39,33 +39,32 @@ void main() {
   });
 
   WalkedRoute newWalk() => WalkedRoute.start(
-        id: repository.newWalkId(userId),
-        userId: userId,
-        routeId: '1',
-        routeTitle: 'Red Square Walk',
-        stops: stops,
-        startedAt: startedAt,
-      );
+    id: repository.newWalkId(userId),
+    userId: userId,
+    routeId: '1',
+    routeTitle: 'Red Square Walk',
+    stops: stops,
+    startedAt: startedAt,
+  );
 
   DocumentReference<Map<String, dynamic>> walkDoc(String id) =>
       firestore.collection('users').doc(userId).collection('walks').doc(id);
 
   LocationPoint point(int i) => LocationPoint.fromSample(
-        i,
-        LocationSample(
-          latitude: 47.6559 + i * 0.0001,
-          longitude: -122.3078,
-          accuracyMeters: 5,
-          recordedAt: startedAt.add(Duration(seconds: 10 * i)),
-        ),
-      );
+    i,
+    LocationSample(
+      latitude: 47.6559 + i * 0.0001,
+      longitude: -122.3078,
+      accuracyMeters: 5,
+      recordedAt: startedAt.add(Duration(seconds: 10 * i)),
+    ),
+  );
 
   test('generates a unique walk ID for each walk', () {
     expect(repository.newWalkId(userId), isNot(repository.newWalkId(userId)));
   });
 
-  test('stores an active walk with the route, stops, and start time',
-      () async {
+  test('stores an active walk with the route, stops, and start time', () async {
     final walk = newWalk();
     await repository.createWalk(walk);
 
@@ -95,30 +94,32 @@ void main() {
     expect(() => repository.createWalk(completed), throwsArgumentError);
   });
 
-  test('saves location points with timestamps, in order, without duplicates',
-      () async {
-    final walk = newWalk();
-    await repository.createWalk(walk);
+  test(
+    'saves location points with timestamps, in order, without duplicates',
+    () async {
+      final walk = newWalk();
+      await repository.createWalk(walk);
 
-    final points = [point(0), point(1), point(2)];
-    final updated = walk.copyWith(
-      distanceMeters: 22,
-      locationPointCount: 3,
-      lastLocationAt: points.last.recordedAt,
-    );
-    await repository.appendLocationPoints(updated, points);
-    // A retry of the same points must not create copies.
-    await repository.appendLocationPoints(updated, points.sublist(1));
+      final points = [point(0), point(1), point(2)];
+      final updated = walk.copyWith(
+        distanceMeters: 22,
+        locationPointCount: 3,
+        lastLocationAt: points.last.recordedAt,
+      );
+      await repository.appendLocationPoints(updated, points);
+      // A retry of the same points must not create copies.
+      await repository.appendLocationPoints(updated, points.sublist(1));
 
-    final saved = await repository.fetchLocationPoints(userId, walk.id);
-    expect(saved.map((p) => p.sequence), [0, 1, 2]);
-    expect(saved[2].recordedAt, startedAt.add(const Duration(seconds: 20)));
-    expect(saved[1].latitude, closeTo(47.656, 1e-9));
+      final saved = await repository.fetchLocationPoints(userId, walk.id);
+      expect(saved.map((p) => p.sequence), [0, 1, 2]);
+      expect(saved[2].recordedAt, startedAt.add(const Duration(seconds: 20)));
+      expect(saved[1].latitude, closeTo(47.656, 1e-9));
 
-    final data = (await walkDoc(walk.id).get()).data()!;
-    expect(data['distanceMeters'], 22);
-    expect(data['locationPointCount'], 3);
-  });
+      final data = (await walkDoc(walk.id).get()).data()!;
+      expect(data['distanceMeters'], 22);
+      expect(data['locationPointCount'], 3);
+    },
+  );
 
   test('saves which stops were reached and when', () async {
     final walk = newWalk();
@@ -140,11 +141,13 @@ void main() {
     await repository.createWalk(walk);
     final completedAt = startedAt.add(const Duration(minutes: 30));
 
-    await repository.completeWalk(walk.copyWith(
-      status: WalkStatus.completed,
-      completedAt: completedAt,
-      distanceMeters: 1200,
-    ));
+    await repository.completeWalk(
+      walk.copyWith(
+        status: WalkStatus.completed,
+        completedAt: completedAt,
+        distanceMeters: 1200,
+      ),
+    );
 
     final saved = (await repository.fetchWalk(userId, walk.id))!;
     expect(saved.status, WalkStatus.completed);
@@ -162,14 +165,18 @@ void main() {
     for (final walk in [older, newer, active]) {
       await repository.createWalk(walk);
     }
-    await repository.completeWalk(older.copyWith(
-      status: WalkStatus.completed,
-      completedAt: startedAt.add(const Duration(minutes: 10)),
-    ));
-    await repository.completeWalk(newer.copyWith(
-      status: WalkStatus.completed,
-      completedAt: startedAt.add(const Duration(minutes: 20)),
-    ));
+    await repository.completeWalk(
+      older.copyWith(
+        status: WalkStatus.completed,
+        completedAt: startedAt.add(const Duration(minutes: 10)),
+      ),
+    );
+    await repository.completeWalk(
+      newer.copyWith(
+        status: WalkStatus.completed,
+        completedAt: startedAt.add(const Duration(minutes: 20)),
+      ),
+    );
 
     final walks = await repository.fetchCompletedWalks(userId);
     expect(walks.map((w) => w.id), [newer.id, older.id]);
@@ -191,7 +198,10 @@ void main() {
   group('WalkedRoute', () {
     test('round-trips through a Firestore map', () {
       final walk = newWalk()
-          .withStopReached('red_stop_2', startedAt.add(const Duration(minutes: 3)))
+          .withStopReached(
+            'red_stop_2',
+            startedAt.add(const Duration(minutes: 3)),
+          )
           .copyWith(
             status: WalkStatus.completed,
             completedAt: startedAt.add(const Duration(minutes: 9)),

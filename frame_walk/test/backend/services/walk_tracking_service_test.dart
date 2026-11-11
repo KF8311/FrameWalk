@@ -10,7 +10,7 @@ import 'package:frame_walk/backend/services/walk_tracking_service.dart';
 import 'package:frame_walk/models/route_stop.dart';
 import 'package:frame_walk/models/walked_route.dart';
 
-import 'fakes/fake_location_source.dart';
+import '../../fakes/fake_location_source.dart';
 
 // Simulates Firestore failing, or never hearing back from the server.
 class ControllableWalkRepository extends WalkRepository {
@@ -101,11 +101,11 @@ void main() {
   });
 
   Future<LocationReadiness> start() => service.startWalk(
-        userId: userId,
-        routeId: '1',
-        routeTitle: 'Red Square Walk',
-        stops: stops,
-      );
+    userId: userId,
+    routeId: '1',
+    routeTitle: 'Red Square Walk',
+    stops: stops,
+  );
 
   // Emits a reading [seconds] after the previous one, moving the clock too.
   void walkTo(double lat, double lng, {int seconds = 10, double acc = 5}) {
@@ -297,14 +297,16 @@ void main() {
       expect(service.signal, SignalStatus.good);
     });
 
-    test('a stream error marks the signal lost without ending the walk',
-        () async {
-      await start();
-      location.emitError(LocationErrorKind.other);
-      expect(service.signal, SignalStatus.noRecentFix);
-      expect(service.phase, WalkPhase.active);
-      expect(location.isStreaming, isTrue);
-    });
+    test(
+      'a stream error marks the signal lost without ending the walk',
+      () async {
+        await start();
+        location.emitError(LocationErrorKind.other);
+        expect(service.signal, SignalStatus.noRecentFix);
+        expect(service.phase, WalkPhase.active);
+        expect(location.isStreaming, isTrue);
+      },
+    );
   });
 
   group('route progress', () {
@@ -318,8 +320,10 @@ void main() {
       walkTo(47.6559 + 5 / 111195, -122.3078, seconds: 60);
       await pumpEventQueue();
 
-      expect(events.map((e) => e.type),
-          [StopEventType.approaching, StopEventType.reached]);
+      expect(events.map((e) => e.type), [
+        StopEventType.approaching,
+        StopEventType.reached,
+      ]);
       expect(events.last.stop.stopId, 'red_stop_1');
       expect(service.progress!.reachedCount, 1);
       expect(service.progress!.nextStop!.stopId, 'red_stop_2');
@@ -334,13 +338,17 @@ void main() {
   });
 
   group('battery-conscious tracking', () {
-    test('asks for a 10 m distance filter and a 5 s minimum interval',
-        () async {
-      await start();
-      expect(location.lastSettings!.distanceFilterMeters, 10);
-      expect(location.lastSettings!.androidInterval,
-          const Duration(seconds: 5));
-    });
+    test(
+      'asks for a 10 m distance filter and a 5 s minimum interval',
+      () async {
+        await start();
+        expect(location.lastSettings!.distanceFilterMeters, 10);
+        expect(
+          location.lastSettings!.androidInterval,
+          const Duration(seconds: 5),
+        );
+      },
+    );
 
     test('saves points in batches of 10 rather than one by one', () async {
       await start();
@@ -388,44 +396,54 @@ void main() {
       expect(await savedPoints(), hasLength(11));
     });
 
-    test('stops listening in the background and resumes in the foreground',
-        () async {
-      await start();
-      walkTo(47.65, -122.30);
+    test(
+      'stops listening in the background and resumes in the foreground',
+      () async {
+        await start();
+        walkTo(47.65, -122.30);
 
-      service.handleAppLifecycleState(AppLifecycleState.inactive);
-      expect(location.isStreaming, isTrue,
-          reason: 'brief interruptions such as dialogs do not pause');
+        service.handleAppLifecycleState(AppLifecycleState.inactive);
+        expect(
+          location.isStreaming,
+          isTrue,
+          reason: 'brief interruptions such as dialogs do not pause',
+        );
 
-      service.handleAppLifecycleState(AppLifecycleState.paused);
-      await pumpEventQueue();
-      expect(location.isStreaming, isFalse);
-      expect(service.signal, SignalStatus.pausedInBackground);
-      expect(await savedPoints(), hasLength(1),
-          reason: 'pending points are saved on the way out');
+        service.handleAppLifecycleState(AppLifecycleState.paused);
+        await pumpEventQueue();
+        expect(location.isStreaming, isFalse);
+        expect(service.signal, SignalStatus.pausedInBackground);
+        expect(
+          await savedPoints(),
+          hasLength(1),
+          reason: 'pending points are saved on the way out',
+        );
 
-      // No false "signal lost" while in the background.
-      now = now.add(const Duration(minutes: 10));
-      service.runHousekeeping();
-      expect(service.signal, SignalStatus.pausedInBackground);
+        // No false "signal lost" while in the background.
+        now = now.add(const Duration(minutes: 10));
+        service.runHousekeeping();
+        expect(service.signal, SignalStatus.pausedInBackground);
 
-      service.handleAppLifecycleState(AppLifecycleState.resumed);
-      await pumpEventQueue();
-      expect(location.isStreaming, isTrue);
-      expect(location.streamsOpened, 2);
-      expect(service.signal, SignalStatus.acquiring);
-    });
+        service.handleAppLifecycleState(AppLifecycleState.resumed);
+        await pumpEventQueue();
+        expect(location.isStreaming, isTrue);
+        expect(location.streamsOpened, 2);
+        expect(service.signal, SignalStatus.acquiring);
+      },
+    );
 
-    test('reports GPS off when returning with location services disabled',
-        () async {
-      await start();
-      service.handleAppLifecycleState(AppLifecycleState.hidden);
-      location.serviceEnabled = false;
-      service.handleAppLifecycleState(AppLifecycleState.resumed);
-      await pumpEventQueue();
-      expect(location.isStreaming, isFalse);
-      expect(service.signal, SignalStatus.gpsDisabled);
-    });
+    test(
+      'reports GPS off when returning with location services disabled',
+      () async {
+        await start();
+        service.handleAppLifecycleState(AppLifecycleState.hidden);
+        location.serviceEnabled = false;
+        service.handleAppLifecycleState(AppLifecycleState.resumed);
+        await pumpEventQueue();
+        expect(location.isStreaming, isFalse);
+        expect(service.signal, SignalStatus.gpsDisabled);
+      },
+    );
   });
 
   group('completion and cancellation', () {
