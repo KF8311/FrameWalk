@@ -1,0 +1,72 @@
+# Team Report
+## Last Week's Goals
+- Integrate Google Maps API for ios - 1 hour
+- Solidify backend route representation and Provider structure - Backend team - 3 hours
+- Integrate frontend pages (home, map, route info, activity) with Provider/backend data instead of mock data - Frontend team - 3 hours
+
+## Progress and Issues
+
+
+## Plans and Goals for Next Week
+
+
+# Contributions of Individual Members
+
+## Asma Begum — Backend Developer
+### Last Week's Goals
+- Run tests after CI is fixed (2 hours).
+- Merge PR #3 after review (1 hour).
+- Help connect backend with frontend (3 hours).
+- Fix any bugs found during testing (2 hours).
+
+### Progress and Issues
+
+
+### Plans and Goals for Next Week
+
+
+## Jasmine Trinh - Frontend
+### Last Week's Goals
+- Merge UI branches to main (1 hour)
+- Integrate UI pages with backend data and Provider structure (3 hours)
+- Begin building navigation view (1 day)
+
+### Progress and Issues
+
+### Plans and Goals for Next Week
+
+
+## Abigail Schidler - Backend
+### Last Week's Goals
+- Complete iOS Google Maps integration (1 hour): Configure and test the Map page on iOS to ensure Google Maps functionality works across both Android and iOS.
+- Expand Firebase data persistence (3–4 hours): Extend Firebase integration beyond login to support persistent user profiles, predefined routes, completed walks, and associated photos.
+- Explore LLM-based prompt generation (2–3 hours): Investigate whether an LLM API can generate unique photography prompts based on a user's route and individual stops, and prototype the integration if feasible.
+### Progress and Issues
+
+### Plans and Goals for Next Week
+
+
+## Jayvion Thaing - Frontend
+### Last Week's Goals
+- Expand map to include genuine route starting and camera functions (1 day)
+- Implement the profile page (1 hour)
+- Discover and implement walkable route illustration to guide users (5 hours)
+
+### Progress and Issues
+
+### Plans and Goals for Next Week
+
+
+## Riley Primavera - Devops and Backend
+### Last Week's Goals
+- Provision database, possibly reproducibly (1 day)
+- Write documentation about existing classes and functions (1 day)
+- Expand test suite and begin integration testing (1 day)
+- Ensure Build step is one command (1 hour)
+
+### Progress and Issues
+
+
+### Plans and Goals for Next Week
+
+
