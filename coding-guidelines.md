@@ -2,47 +2,39 @@
 Feb 4, 2025. 
 > *Used for internal reference only.*
 
-1. Fundamental Principles of Clean Code
+# 1. Fundamental Principles of Clean Code
+
+## 1.1 Meaningful Names
 
 Meaningful names are critical to communicating the intent of your code. When naming variables, functions, or classes in Flutter (or any language), choose descriptive and unambiguous terms.
 
-Variables: Prefer selectedColor over sc, or currentUser over usr.
+**Variables**: Prefer *selectedColor* over *sc*, or *currentUser* over *usr*.
 
-Functions: Use descriptive verbs, e.g., fetchUserData(), calculateTotalPrice(), navigateToDetails().
+**Functions**: Use descriptive verbs, e.g., *fetchUserData()*, *calculateTotalPrice()*, *navigateToDetails()*.
 
-Classes: Follow Dart’s naming conventions (PascalCase for classes), e.g., UserProfile, ProductService.
+**Classes**: Follow Dart’s naming conventions (PascalCase for classes), e.g., *UserProfile*, *ProductService*.
 
+```dart
 // Bad
-
 var sc;
-
 void fn() {
-
   // ...
-  
 }
-
 class U {
-
   // ...
-  
 }
 
 // Good
-
 Color selectedColor;
-
 void fetchUserData() {
-
   // ...
-  
 }
-
 class UserProfile {
-
-  // ...
-  
+  // ... 
 }
+```
+
+## 1.2 Effective Comments
 
 Comments can provide valuable context, but they can also become cluttered if misused. In clean code, comments should be minimal and purposeful.
 
