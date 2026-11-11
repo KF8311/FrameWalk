@@ -6,14 +6,67 @@ An app designed to help you find inspiration and never run out of things to phot
 
 ```bash
 
-FrameWalk/
-├── frame_walk
-│   ├── backend
-│   └── frontend
-├── .gitignore
-├── LICENSE
-├── README.md
-└── coding-guidelines.md
+FrameWalk/frame_walk/
+lib/
+├── main.dart
+├── firebase_options.dart
+├── backend/
+│   ├── providers/
+│   │   └── route_provider.dart
+│   ├── services/
+│   │   ├── auth_service.dart
+│   │   ├── location_source.dart
+│   │   ├── prompt_generator.dart
+│   │   ├── route_manager.dart
+│   │   ├── route_progress_tracker.dart
+│   │   ├── walk_repository.dart
+│   │   └── walk_tracking_service.dart
+├── frontend/
+│   ├── screens/
+│   │   ├── account_page.dart
+│   │   ├── active_walk_page.dart
+│   │   ├── activity page.dart
+│   │   ├── auth_gate.dart
+│   │   ├── create_account_page.dart
+│   │   ├── home_page.dart
+│   │   ├── landing_page.dart
+│   │   ├── login_page.dart
+│   │   ├── map_page.dart
+│   │   └── route_info_page.dart
+│   ├── theme/
+│   │   └── app_theme.dart
+│   ├── widgets/
+│   │   ├── bottom_nav.dart
+│   │   ├── route_card.dart
+│   │   ├── route_filter_chips.dart
+│   │   └── route_search_bar.dart
+├── models/
+│   │   ├── location_point.dart
+│   │   ├── mock_route_data.dart
+│   │   ├── route_stop.dart
+│   │   ├── user_account.dart
+│   │   └── walked_route.dart
+test/
+├── backend/
+│   ├── providers/
+│   │   └── route_provider_test.dart
+│   ├── services/
+│   │   ├── auth_service_test.dart
+│   │   ├── prompt_generator_test.dart
+│   │   ├── route_manager_test.dart
+│   │   ├── route_progress_tracker_test.dart
+│   │   ├── walk_repository_test.dart
+│   │   └── walk_tracking_service_test.dart
+├── fakes/
+│   │   └── fake_location_source.dart
+├── frontend/
+│   ├── screens/
+│   │   └── active_walk_page_test.dart
+│   └── auth_flow_test.dart
+.gitignore
+LICENSE
+README.md
+coding-guidelines.md
 
 ```
 
@@ -25,6 +78,12 @@ Whether a user’s list of ideas has met its end or has struggled to even start,
 
 Since people have their typical routes around school, work, and their general neighborhood, new places and scenery lie waiting to be discovered. Offering users a new, specific path with curated photo prompts will let them literally see the space through a new lens.
 As the seasons change, we want users to reflect on a detailed catalog of their exploration and personal perspective along with their ever-changing environment.
+
+## Functional Use Cases
+- Account creation, logging in, and logging out
+- Filtering and searching routes on home page and map page
+- Viewing route information when clicking a route card and starting a route - includes seeing notifications in app when near a stop but not when the app is closed.
+- Saving a route and seeing it in the activity page
 
 ## Android Setup and Google Maps Configuration
 
