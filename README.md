@@ -395,6 +395,52 @@ Watch the logs while you open the Map tab. Use the **Logcat** tool window in And
 - `android/local.properties`, `android/gradlew`, and `android/gradlew.bat` are intentionally **not** in Git. A fresh clone won't have them. Run `flutter pub get` and then `flutter build apk --debug` from `frame_walk` to generate them, then add your `MAPS_API_KEY` line (step 3.8).
 - Running `flutter clean` does **not** delete `local.properties`, so your key line stays.
 
+## iOS Setup
+
+iOS builds need a Mac with Xcode (from the App Store) and CocoaPods (`brew install cocoapods`). Check them with `flutter doctor`. Firebase is already set up for iOS (`ios/Runner/GoogleService-Info.plist` and `lib/firebase_options.dart`), so only Google Maps needs per-developer setup.
+
+| What | Value / location |
+| --- | --- |
+| iOS bundle ID | `com.jltrinh.frameWalk` (Xcode: Runner > Signing & Capabilities). It differs from the Android ID because iOS doesn't allow `_` in bundle IDs. |
+| Where your iOS Maps key goes | `MAPS_API_KEY=...` in `frame_walk/ios/Flutter/Secrets.xcconfig`, which is not committed (ignored by `frame_walk/ios/.gitignore`) |
+| How the key reaches the app | `Debug.xcconfig`/`Release.xcconfig` include `Secrets.xcconfig` > `Info.plist` (`GMSApiKey`) > `AppDelegate.swift` calls `GMSServices.provideAPIKey` |
+
+### Google Maps key for iOS
+
+Your Android key can't be reused: it's restricted to Android apps and the Maps SDK for Android. Make a second key in the **same** Google Cloud project (billing is already set up there).
+
+1. In **APIs & Services > Library**, enable **Maps SDK for iOS**.
+2. In **APIs & Services > Credentials**, click **+ Create credentials > API key**.
+3. Restrict it: under **Application restrictions** choose **iOS apps** and add `com.jltrinh.frameWalk`; under **API restrictions** choose **Maps SDK for iOS** only. Click **Save**.
+4. Create `frame_walk/ios/Flutter/Secrets.xcconfig` containing one line, with no quotes:
+
+   ```properties
+   MAPS_API_KEY=AIzaYourOwnIosKeyGoesHere
+   ```
+
+5. Confirm Git ignores it (from `frame_walk`): `git check-ignore -v ios/Flutter/Secrets.xcconfig` should print the rule. If it prints nothing, **stop** and ask the team.
+
+Without `Secrets.xcconfig` the app still builds and runs, but maps are blank, the same as Android without a key. The Xcode console shows `MAPS_API_KEY is not set`.
+
+### Running on iOS
+
+From `frame_walk`:
+
+```bash
+open -a Simulator
+flutter run -d ios
+```
+
+- **Simulator:** no Apple account is needed. To fake a location, use the Simulator menu **Features > Location > Custom Location** (for example Red Square, `47.6559, -122.3078`). To simulate walking, run the app from Xcode (`open ios/Runner.xcworkspace`) and use **Debug > Simulate Location** with a GPX file.
+- **Physical iPhone:** the project is signed with the team that registered `com.jltrinh.frameWalk`. Ask that teammate to add you to their Apple Developer team, then select that team in Xcode under **Runner > Signing & Capabilities**. Turn on **Developer Mode** on the phone (**Settings > Privacy & Security > Developer Mode**). If you choose a different team locally, don't commit the resulting `project.pbxproj` change.
+
+### iOS differences
+
+- **Location is foreground only**, as on Android. No background mode is set. iOS doesn't let apps open the device-wide Location Services switch, so if it's off the app explains where to turn it on (**Settings > Privacy & Security > Location Services**).
+- **Automatic GPS pausing is off** (`pauseLocationUpdatesAutomatically: false` in `location_source.dart`). iOS doesn't resume paused updates on its own, and walkers often stand still at photo stops.
+- The Map tab has no zoom buttons on iOS, because the iOS Maps SDK has none. Pinch to zoom instead.
+- On iOS, Firebase keeps the login in the Keychain, so a user may still be logged in after deleting and reinstalling the app.
+
 ## Firebase Setup
 
 Login and account data use one Firebase project shared by the whole team: Firebase Auth for email and password sign-in, and Cloud Firestore for account data. Unlike the Maps key, **teammates don't need their own setup**. The config is committed, so `flutter pub get` and `flutter run` are enough.
@@ -411,6 +457,8 @@ Login and account data use one Firebase project shared by the whole team: Fireba
 | --- | --- | --- |
 | `users` | Firebase Auth user ID | Username, email, statistics, and created date. Readable only by that user. |
 | `usernames` | Lowercase username | The owner's user ID. Keeps usernames unique. |
+| `users/{uid}/walks` | Generated walk ID | One walk of a route: route ID and title, status (`active` or `completed`), start and completion times, a copy of the route's stops (ID, name, coordinates, prompt, time reached), distance walked. Cancelled walks are deleted. |
+| `users/{uid}/walks/{walkId}/locationPoints` | `p000000`, `p000001`, ... | GPS history for a walk: latitude, longitude, accuracy, and time recorded. |
 
 Passwords are handled by Firebase Auth and are never stored in Firestore.
 
@@ -427,9 +475,31 @@ firebase deploy --only firestore:rules
 
 ```bash
 cd frame_walk
-flutter test lib/backend/test lib/frontend/test
+flutter test test/backend/services/auth_service_test.dart test/frontend/auth_flow_test.dart
 ```
 
+
+## GPS Tracking
+
+Pressing **Start Walk** on a route opens the active-walk screen, which records where the user walks and tells them when they approach (within 75 m) or reach (within 25 m) each stop.
+
+| Piece | File |
+| --- | --- |
+| Device location (the only code that uses `geolocator`) | `lib/backend/services/location_source.dart` |
+| Stop proximity and route progress | `lib/backend/services/route_progress_tracker.dart` |
+| Firestore storage | `lib/backend/services/walk_repository.dart` |
+| Starts/stops tracking, handles permission and signal problems | `lib/backend/services/walk_tracking_service.dart` |
+| Screen | `lib/frontend/screens/active_walk_page.dart` |
+
+**Routes vs. Walked-Routes:** predefined routes are not stored with walks. A walk refers to its route by `routeId` and keeps its own copy of the stops. Only walks with `status: completed` are Walked-Routes.
+
+**Foreground only.** Location is recorded only while FrameWalk is open on screen. When the app goes to the background or the screen locks, tracking pauses and resumes when the user returns. The gap shows up in the location history timestamps. Background tracking would need, at minimum, a location foreground service (`FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_LOCATION` permissions, `POST_NOTIFICATIONS` on Android 13+, and a `foregroundNotificationConfig` in `AndroidSettings`) on Android, and the `location` background mode on iOS. None of these are set up.
+
+**Battery:** high accuracy with a 10 m distance filter (a 5 s minimum interval on Android), so no readings arrive while standing still. Points are saved to Firestore in batches of 10, or every 30 seconds.
+
+**Permissions:** the app asks for "while using the app" location when a walk starts. If permission is denied, location services are off, or only approximate location is allowed, the screen explains why and links to the right settings. If the GPS signal drops mid-walk, the walk keeps going and a banner shows the problem.
+
+**Testing on an emulator:** open the emulator's **Extended controls (⋯) > Location** and set a point near a stop (for example Red Square, `47.6559, -122.3078`), or play back a route.
 
 ## Links
 

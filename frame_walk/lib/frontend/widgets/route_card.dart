@@ -1,9 +1,28 @@
 
 import 'package:flutter/material.dart';
-import '../../models/photo_route.dart';
+import '../../backend/services/route_manager.dart';
+
+// Shared by route cards and the bookmark button on the route details page.
+// Bookmarks are updated by the existing callback; feedback is UI-only.
+void toggleRouteBookmarkWithFeedback(
+  BuildContext context, {
+  required bool isBookmarked,
+  required VoidCallback onToggle,
+}) {
+  onToggle();
+  if (isBookmarked) return; // Removing a bookmark needs no save confirmation.
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      const SnackBar(
+        content: Text('Saved to Saved Walks in Activity.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+}
 
 class RouteCard extends StatelessWidget {
-  final PhotoRoute route;
+  final WalkingRoute route;
   final VoidCallback onTap;
   final VoidCallback onBookmarkTap;
 
@@ -31,7 +50,7 @@ class RouteCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      route.title,
+                      route.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
@@ -41,7 +60,11 @@ class RouteCard extends StatelessWidget {
                     tooltip: route.isBookmarked
                         ? 'Remove bookmark'
                         : 'Bookmark route',
-                    onPressed: onBookmarkTap,
+                    onPressed: () => toggleRouteBookmarkWithFeedback(
+                      context,
+                      isBookmarked: route.isBookmarked,
+                      onToggle: onBookmarkTap,
+                    ),
                     icon: Icon(
                       route.isBookmarked
                           ? Icons.bookmark
@@ -54,7 +77,7 @@ class RouteCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.access_time, size: 16),
                   const SizedBox(width: 4),
-                  Text('${route.durationMinutes} min'),
+                  Text('${route.estimatedMinutes} min'),
                   const SizedBox(width: 12),
                   const Icon(Icons.place_outlined, size: 16),
                   const SizedBox(width: 4),
