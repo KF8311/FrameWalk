@@ -1,6 +1,10 @@
-# FrameWalk
+# FrameWalk - Developer Guide
 
 An app designed to help you find inspiration and never run out of things to photograph, all while taking relaxing walks through your community.
+
+## Links
+- [Living Document](https://docs.google.com/document/d/1lYug-M3YyP1dTDqYPlPpnL4UAtH1hgJSdiU_M_lnueI/edit?tab=t.0)
+- [Figma](https://www.figma.com/design/9afJm17FYCXVwcnU6hJhCi/CSE-403?node-id=0-1&m=dev&t=1FsT888g7EucfzPl-1)
 
 ## Layout
 
@@ -84,6 +88,14 @@ As the seasons change, we want users to reflect on a detailed catalog of their e
 - Filtering and searching routes on home page and map page
 - Viewing route information when clicking a route card and starting a route - includes seeing notifications in app when near a stop but not when the app is closed.
 - Saving a route and seeing it in the activity page
+
+## Adding Tests
+- All tests should exist in the frame_walk/test folder (outside of lib) under either frame_walk/test/backend or frame_walk/test/frontend depending on the test. Mocks for testing should go in frame_walk/test/fakes.
+- If for existing test suite (auth_service_test.dart, prompt_generator_test.dart, route_manager_test.dart, route_provider_test.dart, and auth_flow_test.dart), add to the existing file and it will be linted and run upon CI trigger
+- If new file, ensure proper syntax and end file name with _test.dart
+- Tests should use group() from the flutter_test package to group together test() calls from the flutter_test package so that tests are grouped and run together logically. Each group() and test() should have descriptive description fields.
+- Each test() call should contain expect(a, b) calls with two parameters passed in (a, b). The first (a) should be the actual value where the second (b) is the expected value. 
+
 
 ## Android Setup and Google Maps Configuration
 
@@ -559,8 +571,3 @@ Pressing **Start Walk** on a route opens the active-walk screen, which records w
 **Permissions:** the app asks for "while using the app" location when a walk starts. If permission is denied, location services are off, or only approximate location is allowed, the screen explains why and links to the right settings. If the GPS signal drops mid-walk, the walk keeps going and a banner shows the problem.
 
 **Testing on an emulator:** open the emulator's **Extended controls (⋯) > Location** and set a point near a stop (for example Red Square, `47.6559, -122.3078`), or play back a route.
-
-## Links
-
-- [Living Document](https://docs.google.com/document/d/1lYug-M3YyP1dTDqYPlPpnL4UAtH1hgJSdiU_M_lnueI/edit?tab=t.0)
-- [Figma](https://www.figma.com/design/9afJm17FYCXVwcnU6hJhCi/CSE-403?node-id=0-1&m=dev&t=1FsT888g7EucfzPl-1)
