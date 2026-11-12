@@ -3,7 +3,7 @@
 An app designed to help you find inspiration and never run out of things to photograph, all while taking relaxing walks through your community.
 
 ## Links
-- **[User Guide]**(https://docs.google.com/document/d/10nhHqrpsAJrck1gYdsq_RcXdFm_2nfoR1fQ4NzOpduM/edit?usp=sharing)
+- [**User Guide**](https://docs.google.com/document/d/10nhHqrpsAJrck1gYdsq_RcXdFm_2nfoR1fQ4NzOpduM/edit?usp=sharing)
 - [Living Document](https://docs.google.com/document/d/1lYug-M3YyP1dTDqYPlPpnL4UAtH1hgJSdiU_M_lnueI/edit?tab=t.0)
 - [Figma](https://www.figma.com/design/9afJm17FYCXVwcnU6hJhCi/CSE-403?node-id=0-1&m=dev&t=1FsT888g7EucfzPl-1)
 
