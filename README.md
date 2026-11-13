@@ -141,6 +141,20 @@ Remove-Item .\maps-api-key.txt
 
 Replace the example key with your Google Maps key. Follow [Google Maps API Setup](#3-google-maps-api-setup) to create and restrict one. Re-run the APK export command after rebuilding. Never commit `maps-api-key.txt`.
 
+#### Run tests in Docker
+
+Use the Flutter builder image to run the full test suite without installing Flutter locally:
+
+```powershell
+docker run --rm `
+  -v "${PWD}\frame_walk:/workspace/frame_walk" `
+  -w /workspace/frame_walk `
+  ghcr.io/gmeligio/flutter-android:3.50.0 `
+  bash -c "flutter pub get && flutter test"
+```
+
+The `framewalk-apk` image only exports the APK, so use the builder image above for tests.
+
 ### 1. Prerequisites
 
 #### 1.1 Install Flutter (includes Dart)
